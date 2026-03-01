@@ -7,6 +7,7 @@ import { errorHandler } from './middlewares/errorHandler.js';
 import { rateLimiter } from './middlewares/rateLimiter.js';
 import { apiRouter } from './routes/index.js';
 import { getOpenApiSpec } from './docs/openapi.js';
+import { UPLOADS_DIR } from './utils/studentImage.js';
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.get('/api/docs.json', (_req, res) => {
 });
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
+app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/api', apiRouter);
 
 app.get('/health', (_req, res) => {

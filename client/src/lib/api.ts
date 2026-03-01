@@ -6,18 +6,42 @@ import type {
   CreateBusResponse,
   CreateDriverResponse,
   CreateOwnerResponse,
+  CreateStudentPayload,
   CreateStudentResponse,
   DriverListResponse,
   DriverMeResponse,
   LoginResponse,
+  ListQueryParams,
   OwnerListResponse,
   OwnerStatsResponse,
   RefreshResponse,
   StudentListResponse,
   StudentScanResponse,
+  UpdateStudentPayload,
 } from '../types/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
+function toQueryString(params?: ListQueryParams): string {
+  if (!params) return '';
+
+  const searchParams = new URLSearchParams();
+  if (typeof params.page === 'number') {
+    searchParams.set('page', String(params.page));
+  }
+  if (typeof params.pageSize === 'number') {
+    searchParams.set('pageSize', String(params.pageSize));
+  }
+  if (params.search && params.search.trim().length > 0) {
+    searchParams.set('search', params.search.trim());
+  }
+  if (typeof params.isActive === 'boolean') {
+    searchParams.set('isActive', String(params.isActive));
+  }
+
+  const serialized = searchParams.toString();
+  return serialized ? `?${serialized}` : '';
+}
 
 export interface ApiError {
   error: string;
@@ -28,10 +52,11 @@ async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+  const isFormData = options.body instanceof FormData;
+  const headers = new Headers(options.headers);
+  if (!isFormData) {
+    headers.set('Content-Type', 'application/json');
+  }
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -78,15 +103,48 @@ export const api = {
       }),
   },
   admin: {
-    drivers: () => request<DriverListResponse>('/admin/drivers'),
-    buses: () => request<BusListResponse>('/admin/buses'),
-    owners: () => request<OwnerListResponse>('/admin/owners'),
-    students: () => request<StudentListResponse>('/admin/students'),
-    createStudent: (studentId: string, name: string, email?: string) =>
-      request<CreateStudentResponse>('/admin/students', {
+    drivers: (params?: ListQueryParams) =>
+      request<DriverListResponse>(`/admin/drivers${toQueryString(params)}`),
+    buses: (params?: ListQueryParams) =>
+      request<BusListResponse>(`/admin/buses${toQueryString(params)}`),
+    owners: (params?: ListQueryParams) =>
+      request<OwnerListResponse>(`/admin/owners${toQueryString(params)}`),
+    students: (params?: ListQueryParams) =>
+      request<StudentListResponse>(`/admin/students${toQueryString(params)}`),
+    createStudent: (payload: CreateStudentPayload) => {
+      const formData = new FormData();
+      formData.set('name', payload.name);
+      formData.set('isActive', String(payload.isActive));
+      if (payload.email) {
+        formData.set('email', payload.email);
+      }
+      if (payload.image) {
+        formData.set('image', payload.image);
+      }
+      return request<CreateStudentResponse>('/admin/students', {
         method: 'POST',
-        body: JSON.stringify({ studentId, name, email }),
+        body: formData,
+      });
+    },
+    deleteStudent: (id: string) =>
+      request<{ success: boolean }>(`/admin/students/${id}`, {
+        method: 'DELETE',
       }),
+    updateStudent: (id: string, payload: UpdateStudentPayload) => {
+      const formData = new FormData();
+      formData.set('name', payload.name);
+      formData.set('isActive', String(payload.isActive));
+      if (payload.email) {
+        formData.set('email', payload.email);
+      }
+      if (payload.image) {
+        formData.set('image', payload.image);
+      }
+      return request<CreateStudentResponse>(`/admin/students/${id}`, {
+        method: 'PATCH',
+        body: formData,
+      });
+    },
     createOwner: (name: string, email: string, password: string, phone?: string) =>
       request<CreateOwnerResponse>('/admin/owners', {
         method: 'POST',
@@ -98,13 +156,15 @@ export const api = {
       request<OwnerStatsResponse>(
         `/bus-owner/stats?${from ? `from=${from}` : ''}${to ? `&to=${to}` : ''}`
       ),
-    buses: () => request<BusListResponse>('/bus-owner/buses'),
+    buses: (params?: ListQueryParams) =>
+      request<BusListResponse>(`/bus-owner/buses${toQueryString(params)}`),
     createBus: (plateNumber: string, capacity: number) =>
       request<CreateBusResponse>('/bus-owner/buses', {
         method: 'POST',
         body: JSON.stringify({ plateNumber, capacity }),
       }),
-    drivers: () => request<DriverListResponse>('/bus-owner/drivers'),
+    drivers: (params?: ListQueryParams) =>
+      request<DriverListResponse>(`/bus-owner/drivers${toQueryString(params)}`),
     createDriver: (
       name: string,
       email: string,
@@ -115,7 +175,8 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ name, email, password, phone }),
       }),
-    assignments: () => request<AssignmentListResponse>('/bus-owner/assignments'),
+    assignments: (params?: ListQueryParams) =>
+      request<AssignmentListResponse>(`/bus-owner/assignments${toQueryString(params)}`),
     createAssignment: (
       driverId: string,
       busId: string,

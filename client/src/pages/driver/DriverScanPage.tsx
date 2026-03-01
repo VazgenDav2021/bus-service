@@ -7,7 +7,7 @@ import type { StudentScanResult } from '../../types/domain';
 import { getErrorMessage } from '../../utils/errors';
 import { APP_ROUTES } from '../../constants/routes';
 
-const TEMP_HARDCODED_QR_TOKEN = 'QR-13113f63adb5b878c5e81ff62c9d1b48';
+const TEMP_HARDCODED_QR_TOKEN = 'QR-8b1da795d00af5c2a0d729ff68a66a0f';
 
 export function DriverScanPage() {
   const navigate = useNavigate();

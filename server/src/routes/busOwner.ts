@@ -5,6 +5,7 @@ import {
   createAssignmentSchema,
   createBusSchema,
   createDriverSchema,
+  paginatedListQuerySchema,
 } from '../modules/busOwner/busOwnerValidation.js';
 import { parseOrThrow } from '../utils/validation.js';
 
@@ -28,8 +29,9 @@ busOwnerRouter.get('/stats', async (req: AuthRequest, res, next) => {
 busOwnerRouter.get('/buses', async (req: AuthRequest, res, next) => {
   try {
     const ownerId = req.user!.sub;
-    const buses = await busOwnerService.getOwnerBuses(ownerId);
-    res.json({ buses });
+    const query = paginatedListQuerySchema.parse(req.query);
+    const result = await busOwnerService.getOwnerBuses(ownerId, query);
+    res.json(result);
   } catch (e) {
     next(e);
   }
@@ -49,8 +51,9 @@ busOwnerRouter.post('/buses', async (req: AuthRequest, res, next) => {
 busOwnerRouter.get('/drivers', async (req: AuthRequest, res, next) => {
   try {
     const ownerId = req.user!.sub;
-    const drivers = await busOwnerService.getOwnerDrivers(ownerId);
-    res.json({ drivers });
+    const query = paginatedListQuerySchema.parse(req.query);
+    const result = await busOwnerService.getOwnerDrivers(ownerId, query);
+    res.json(result);
   } catch (e) {
     next(e);
   }
@@ -70,8 +73,9 @@ busOwnerRouter.post('/drivers', async (req: AuthRequest, res, next) => {
 busOwnerRouter.get('/assignments', async (req: AuthRequest, res, next) => {
   try {
     const ownerId = req.user!.sub;
-    const assignments = await busOwnerService.getOwnerAssignments(ownerId);
-    res.json({ assignments });
+    const query = paginatedListQuerySchema.parse(req.query);
+    const result = await busOwnerService.getOwnerAssignments(ownerId, query);
+    res.json(result);
   } catch (e) {
     next(e);
   }

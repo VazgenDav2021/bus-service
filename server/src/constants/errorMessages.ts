@@ -21,6 +21,7 @@ export const ERROR_MESSAGES = {
   assignmentOverlap: 'Վարորդն արդեն ունի ավտոբուսի կցում այս ամսաթվերի միջակայքում',
   driverHasNoActiveBusAssignment: 'Վարորդը չունի ակտիվ ավտոբուսի կցում',
   driverNotFound: 'Վարորդը չի գտնվել',
+  studentNotFound: 'Ուսանողը չի գտնվել',
   qrTokenRequired: 'qrToken-ը պարտադիր է',
   studentQrNotFound: 'Ուսանողի QR կոդը չի գտնվել',
   boardingWorkingDaysOnly: 'Մուտքի գրանցումը թույլատրվում է միայն աշխատանքային օրերին',

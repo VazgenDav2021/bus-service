@@ -1,49 +1,81 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  LogOut,
-  LayoutDashboard,
-  Users,
-  Bus,
-  Plus,
-  QrCode,
-  X,
-} from 'lucide-react';
-import { useAuth } from '../../features/auth/AuthContext';
-import { api } from '../../lib/api';
-import { QRCodeDisplay } from '../../components/QRCodeDisplay';
-import { toast } from 'react-toastify';
+import { useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../features/auth/AuthContext";
+import { api } from "../../lib/api";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { toast } from "react-toastify";
 import type {
   BusListItem,
   DriverListItem,
   OwnerListItem,
   StudentListItem,
-} from '../../types/domain';
-import type { CreateStudentResponse } from '../../types/api';
-import { DEFAULT_PASSWORD } from '../../constants/auth';
-import { APP_ROUTES } from '../../constants/routes';
-import { getErrorMessage } from '../../utils/errors';
+} from "../../types/domain";
+import type { CreateStudentResponse } from "../../types/api";
+import { DEFAULT_PASSWORD } from "../../constants/auth";
+import { APP_ROUTES } from "../../constants/routes";
+import { getErrorMessage } from "../../utils/errors";
+import { AdminHeader } from "./components/AdminHeader";
+import { AdminRouteNav } from "./components/AdminRouteNav";
+import { StudentsCreateSection } from "./components/StudentsCreateSection";
+import {
+  StudentsTableSection,
+  type StudentColumnKey,
+} from "./components/StudentsTableSection";
+import { DriversTableSection } from "./components/DriversTableSection";
+import { BusesTableSection } from "./components/BusesTableSection";
+import { OwnersCreateSection } from "./components/OwnersCreateSection";
+import { OwnersTableSection } from "./components/OwnersTableSection";
+import { StudentQrViewerModal } from "./components/StudentQrViewerModal";
+import { StudentEditModal } from "./components/StudentEditModal";
 
-type Tab = 'students' | 'drivers' | 'buses' | 'owners';
+type AdminSection =
+  | "students"
+  | "studentsCreate"
+  | "drivers"
+  | "buses"
+  | "busOwners"
+  | "busOwnersCreate";
+
+const ADMIN_ROUTE_PATHS = {
+  students: "/admin/students",
+  studentsCreate: "/admin/students-create",
+  drivers: "/admin/drivers",
+  buses: "/admin/buses",
+  busOwners: "/admin/bus-owners",
+  busOwnersCreate: "/admin/bus-owners/create",
+} as const;
+const PAGE_SIZE = 10;
+
+function getAdminSection(pathname: string): AdminSection | null {
+  if (pathname === ADMIN_ROUTE_PATHS.students) return "students";
+  if (pathname === ADMIN_ROUTE_PATHS.studentsCreate) return "studentsCreate";
+  if (pathname === ADMIN_ROUTE_PATHS.drivers) return "drivers";
+  if (pathname === ADMIN_ROUTE_PATHS.buses) return "buses";
+  if (pathname === ADMIN_ROUTE_PATHS.busOwners) return "busOwners";
+  if (pathname === ADMIN_ROUTE_PATHS.busOwnersCreate) return "busOwnersCreate";
+  return null;
+}
 
 export function AdminDashboard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>('students');
+  const location = useLocation();
+  const section = getAdminSection(location.pathname);
   const [students, setStudents] = useState<StudentListItem[]>([]);
   const [drivers, setDrivers] = useState<DriverListItem[]>([]);
   const [buses, setBuses] = useState<BusListItem[]>([]);
   const [owners, setOwners] = useState<OwnerListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [newStudent, setNewStudent] = useState({
-    studentId: '',
-    name: '',
-    email: '',
+    name: "",
+    email: "",
+    isActive: true,
+    image: null as File | null,
   });
   const [newOwner, setNewOwner] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: "",
+    email: "",
+    phone: "",
     password: DEFAULT_PASSWORD,
   });
   const [createdStudentQR, setCreatedStudentQR] = useState<{
@@ -56,42 +88,212 @@ export function AdminDashboard() {
     name: string;
     qrToken: string;
   } | null>(null);
+  const [studentToDelete, setStudentToDelete] =
+    useState<StudentListItem | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [studentToEdit, setStudentToEdit] = useState<StudentListItem | null>(
+    null,
+  );
+  const [editLoading, setEditLoading] = useState(false);
+  const [editStudentForm, setEditStudentForm] = useState({
+    name: "",
+    email: "",
+    isActive: true,
+    image: null as File | null,
+  });
+  const [studentsPage, setStudentsPage] = useState(1);
+  const [studentsTotalPages, setStudentsTotalPages] = useState(1);
+  const [studentsSearch, setStudentsSearch] = useState("");
+  const [studentsStatusFilter, setStudentsStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
+  const [driversPage, setDriversPage] = useState(1);
+  const [driversTotalPages, setDriversTotalPages] = useState(1);
+  const [driversSearch, setDriversSearch] = useState("");
+  const [busesPage, setBusesPage] = useState(1);
+  const [busesTotalPages, setBusesTotalPages] = useState(1);
+  const [busesSearch, setBusesSearch] = useState("");
+  const [ownersPage, setOwnersPage] = useState(1);
+  const [ownersTotalPages, setOwnersTotalPages] = useState(1);
+  const [ownersSearch, setOwnersSearch] = useState("");
+  const [studentVisibleColumns, setStudentVisibleColumns] = useState<
+    Record<StudentColumnKey, boolean>
+  >({
+    studentId: true,
+    name: true,
+    email: true,
+    image: true,
+    status: true,
+    qrToken: true,
+    qrUsageCount: true,
+    qrUsageTotal: true,
+    actions: true,
+  });
 
   useEffect(() => {
-    if (tab === 'students') {
-      setLoading(true);
-      api.admin.students().then((d) => setStudents(d.students)).finally(() => setLoading(false));
-    } else if (tab === 'drivers') {
-      setLoading(true);
-      api.admin.drivers().then((d) => setDrivers(d.drivers)).finally(() => setLoading(false));
-    } else if (tab === 'buses') {
-      setLoading(true);
-      api.admin.buses().then((d) => setBuses(d.buses)).finally(() => setLoading(false));
-    } else if (tab === 'owners') {
-      setLoading(true);
-      api.admin.owners().then((d) => setOwners(d.owners)).finally(() => setLoading(false));
+    if (location.pathname === APP_ROUTES.admin || location.pathname === `${APP_ROUTES.admin}/`) {
+      navigate(ADMIN_ROUTE_PATHS.students, { replace: true });
     }
-  }, [tab]);
+  }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    if (section !== "studentsCreate" && createdStudentQR) {
+      setCreatedStudentQR(null);
+    }
+  }, [section, createdStudentQR]);
+
+  const fetchStudents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.admin.students({
+        page: studentsPage,
+        pageSize: PAGE_SIZE,
+        search: studentsSearch,
+        isActive:
+          studentsStatusFilter === "all"
+            ? undefined
+            : studentsStatusFilter === "active",
+      });
+      setStudents(response.students);
+      setStudentsTotalPages(response.pagination.totalPages);
+    } finally {
+      setLoading(false);
+    }
+  }, [studentsPage, studentsSearch, studentsStatusFilter]);
+
+  const fetchDrivers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.admin.drivers({
+        page: driversPage,
+        pageSize: PAGE_SIZE,
+        search: driversSearch,
+      });
+      setDrivers(response.drivers);
+      setDriversTotalPages(response.pagination.totalPages);
+    } finally {
+      setLoading(false);
+    }
+  }, [driversPage, driversSearch]);
+
+  const fetchBuses = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.admin.buses({
+        page: busesPage,
+        pageSize: PAGE_SIZE,
+        search: busesSearch,
+      });
+      setBuses(response.buses);
+      setBusesTotalPages(response.pagination.totalPages);
+    } finally {
+      setLoading(false);
+    }
+  }, [busesPage, busesSearch]);
+
+  const fetchOwners = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.admin.owners({
+        page: ownersPage,
+        pageSize: PAGE_SIZE,
+        search: ownersSearch,
+      });
+      setOwners(response.owners);
+      setOwnersTotalPages(response.pagination.totalPages);
+    } finally {
+      setLoading(false);
+    }
+  }, [ownersPage, ownersSearch]);
+
+  useEffect(() => {
+    if (section === "students") {
+      void fetchStudents();
+    } else if (section === "drivers") {
+      void fetchDrivers();
+    } else if (section === "buses") {
+      void fetchBuses();
+    } else if (section === "busOwners") {
+      void fetchOwners();
+    }
+  }, [section, fetchStudents, fetchDrivers, fetchBuses, fetchOwners]);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate(APP_ROUTES.login);
+  }, [logout, navigate]);
+
+  const handleNavigate = useCallback(
+    (path: string) => {
+      navigate(path);
+    },
+    [navigate],
+  );
+
+  const handleNavigateToCreateStudent = useCallback(() => {
+    navigate(ADMIN_ROUTE_PATHS.studentsCreate);
+  }, [navigate]);
+
+  const handleNavigateToCreateOwner = useCallback(() => {
+    navigate(ADMIN_ROUTE_PATHS.busOwnersCreate);
+  }, [navigate]);
+
+  const handleCloseCreatedQr = useCallback(() => {
+    setCreatedStudentQR(null);
+  }, []);
+
+  const handleNewStudentNameChange = useCallback((value: string) => {
+    setNewStudent((s) => ({ ...s, name: value }));
+  }, []);
+
+  const handleNewStudentEmailChange = useCallback((value: string) => {
+    setNewStudent((s) => ({ ...s, email: value }));
+  }, []);
+
+  const handleNewStudentIsActiveChange = useCallback((value: boolean) => {
+    setNewStudent((s) => ({ ...s, isActive: value }));
+  }, []);
+
+  const handleNewStudentImageChange = useCallback((file: File | null) => {
+    setNewStudent((s) => ({ ...s, image: file }));
+  }, []);
+
+  const handleNewOwnerNameChange = useCallback((value: string) => {
+    setNewOwner((s) => ({ ...s, name: value }));
+  }, []);
+
+  const handleNewOwnerEmailChange = useCallback((value: string) => {
+    setNewOwner((s) => ({ ...s, email: value }));
+  }, []);
+
+  const handleNewOwnerPhoneChange = useCallback((value: string) => {
+    setNewOwner((s) => ({ ...s, phone: value }));
+  }, []);
+
+  const handleNewOwnerPasswordChange = useCallback((value: string) => {
+    setNewOwner((s) => ({ ...s, password: value }));
+  }, []);
 
   async function handleCreateStudent(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const result = await api.admin.createStudent(
-        newStudent.studentId,
-        newStudent.name,
-        newStudent.email || undefined
-      );
+      const result = await api.admin.createStudent({
+        name: newStudent.name,
+        email: newStudent.email || undefined,
+        isActive: newStudent.isActive,
+        image: newStudent.image ?? undefined,
+      });
       const qrStudentResult: CreateStudentResponse = result;
       setCreatedStudentQR({
         studentId: qrStudentResult.studentId,
         name: qrStudentResult.name,
         qrToken: qrStudentResult.qrToken,
       });
-      setNewStudent({ studentId: '', name: '', email: '' });
-      setTab('students');
-      api.admin.students().then((d) => setStudents(d.students));
+      setNewStudent({ name: "", email: "", isActive: true, image: null });
+      navigate(ADMIN_ROUTE_PATHS.students);
+      setStudentsPage(1);
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Չհաջողվեց ստեղծել ուսանող'));
+      toast.error(getErrorMessage(err, "Չհաջողվեց ստեղծել ուսանող"));
     }
   }
 
@@ -102,319 +304,276 @@ export function AdminDashboard() {
         newOwner.name,
         newOwner.email,
         newOwner.password,
-        newOwner.phone || undefined
+        newOwner.phone || undefined,
       );
-      setNewOwner({ name: '', email: '', phone: '', password: DEFAULT_PASSWORD });
-      setTab('owners');
-      api.admin.owners().then((d) => setOwners(d.owners));
+      setNewOwner({
+        name: "",
+        email: "",
+        phone: "",
+        password: DEFAULT_PASSWORD,
+      });
+      navigate(ADMIN_ROUTE_PATHS.busOwners);
+      setOwnersPage(1);
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Չհաջողվեց ստեղծել ավտոբուսի սեփականատեր'));
+      toast.error(
+        getErrorMessage(err, "Չհաջողվեց ստեղծել ավտոբուսի սեփականատեր"),
+      );
     }
+  }
+
+  async function handleConfirmDeleteStudent() {
+    if (!studentToDelete) return;
+    setDeleteLoading(true);
+    try {
+      await api.admin.deleteStudent(studentToDelete.id);
+      await fetchStudents();
+      setStudentToDelete(null);
+      toast.success("Ուսանողը հեռացվել է");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Չհաջողվեց հեռացնել ուսանողին"));
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  const handleStudentsSearchChange = useCallback((value: string) => {
+    setStudentsSearch(value);
+    setStudentsPage(1);
+  }, []);
+
+  const handleStudentsStatusFilterChange = useCallback(
+    (value: "all" | "active" | "inactive") => {
+      setStudentsStatusFilter(value);
+      setStudentsPage(1);
+    },
+    [],
+  );
+
+  const handleToggleStudentColumn = useCallback((column: StudentColumnKey) => {
+    setStudentVisibleColumns((prev) => ({
+      ...prev,
+      [column]: !prev[column],
+    }));
+  }, []);
+
+  const openEditStudent = useCallback((student: StudentListItem) => {
+    setStudentToEdit(student);
+    setEditStudentForm({
+      name: student.name,
+      email: student.email ?? "",
+      isActive: student.isActive,
+      image: null,
+    });
+  }, []);
+
+  const handleViewQr = useCallback((student: StudentListItem) => {
+    if (!student.qrToken) return;
+
+    setViewingQR({
+      studentId: student.studentId,
+      name: student.name,
+      qrToken: student.qrToken,
+    });
+  }, []);
+
+  const handleCloseViewingQr = useCallback(() => {
+    setViewingQR(null);
+  }, []);
+
+  const handleEditNameChange = useCallback((value: string) => {
+    setEditStudentForm((s) => ({ ...s, name: value }));
+  }, []);
+
+  const handleEditEmailChange = useCallback((value: string) => {
+    setEditStudentForm((s) => ({ ...s, email: value }));
+  }, []);
+
+  const handleEditIsActiveChange = useCallback((value: boolean) => {
+    setEditStudentForm((s) => ({ ...s, isActive: value }));
+  }, []);
+
+  const handleEditImageChange = useCallback((file: File | null) => {
+    setEditStudentForm((s) => ({ ...s, image: file }));
+  }, []);
+
+  const handleCloseStudentEdit = useCallback(() => {
+    setStudentToEdit(null);
+  }, []);
+
+  async function handleEditStudent(e: React.FormEvent) {
+    e.preventDefault();
+    if (!studentToEdit) return;
+    setEditLoading(true);
+    try {
+      const updated = await api.admin.updateStudent(studentToEdit.id, {
+        name: editStudentForm.name,
+        email: editStudentForm.email || undefined,
+        isActive: editStudentForm.isActive,
+        image: editStudentForm.image ?? undefined,
+      });
+      setStudents((prev) =>
+        prev.map((student) =>
+          student.id === studentToEdit.id
+            ? {
+                ...student,
+                name: updated.name,
+                email: updated.email,
+                isActive: updated.isActive,
+                imageUrl: updated.imageUrl,
+              }
+            : student,
+        ),
+      );
+      setStudentToEdit(null);
+      toast.success("Ուսանողի տվյալները թարմացվել են");
+    } catch (err) {
+      toast.error(
+        getErrorMessage(err, "Չհաջողվեց թարմացնել ուսանողի տվյալները"),
+      );
+    } finally {
+      setEditLoading(false);
+    }
+  }
+
+  if (!section) {
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-6 h-6 text-primary-600" />
-            <span className="font-semibold text-slate-800">Ադմինի վահանակ</span>
-          </div>
-          <button
-            onClick={() => {
-              logout();
-              navigate(APP_ROUTES.login);
-            }}
-            className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
+      <AdminHeader onLogout={handleLogout} />
 
       <div className="max-w-6xl mx-auto p-4">
-        <nav className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {[
-            { id: 'students' as Tab, label: 'Ուսանողներ', icon: Users },
-            { id: 'drivers' as Tab, label: 'Վարորդներ', icon: Users },
-            { id: 'buses' as Tab, label: 'Ավտոբուսներ', icon: Bus },
-            { id: 'owners' as Tab, label: 'Սեփականատերեր', icon: Users },
-          ].map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
-                tab === id ? 'bg-primary-600 text-white' : 'bg-white text-slate-600 border border-slate-200'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
-        </nav>
+        <AdminRouteNav
+          currentPath={location.pathname}
+          onNavigate={handleNavigate}
+          paths={ADMIN_ROUTE_PATHS}
+        />
 
-        {tab === 'students' && (
+        {section === "studentsCreate" && (
+          <StudentsCreateSection
+            createdStudentQR={createdStudentQR}
+            onCloseCreatedQr={handleCloseCreatedQr}
+            onSubmit={handleCreateStudent}
+            form={newStudent}
+            onNameChange={handleNewStudentNameChange}
+            onEmailChange={handleNewStudentEmailChange}
+            onIsActiveChange={handleNewStudentIsActiveChange}
+            onImageChange={handleNewStudentImageChange}
+          />
+        )}
+
+        {section === "students" && (
           <div className="space-y-6">
-            {createdStudentQR && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-lg font-semibold text-green-800">
-                    Ուսանողը ստեղծվել է — QR կոդ
-                  </h3>
-                  <button
-                    onClick={() => setCreatedStudentQR(null)}
-                    className="p-1 rounded hover:bg-green-100 text-green-700"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-4">
-                  <QRCodeDisplay
-                    value={createdStudentQR.qrToken}
-                    size={180}
-                    studentName={createdStudentQR.name}
-                  />
-                </div>
-                <p className="mt-3 text-sm text-green-700">
-                  Տպեք կամ կիսվեք այս QR կոդը ուսանողի հետ։ Վարորդները այն սկանավորում են երթերի ընթացքում։
-                </p>
-              </div>
-            )}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                Ավելացնել ուսանող
-              </h2>
-              <form onSubmit={handleCreateStudent} className="space-y-3 max-w-md">
-                <input
-                  placeholder="Ուսանողի ID"
-                  value={newStudent.studentId}
-                  onChange={(e) =>
-                    setNewStudent((s) => ({ ...s, studentId: e.target.value }))
-                  }
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300"
-                />
-                <input
-                  placeholder="Անուն"
-                  value={newStudent.name}
-                  onChange={(e) =>
-                    setNewStudent((s) => ({ ...s, name: e.target.value }))
-                  }
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300"
-                />
-                <input
-                  type="email"
-                  placeholder="Էլ. փոստ (ոչ պարտադիր)"
-                  value={newStudent.email}
-                  onChange={(e) =>
-                    setNewStudent((s) => ({ ...s, email: e.target.value }))
-                  }
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg"
-                >
-                  Ստեղծել ուսանող
-                </button>
-              </form>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-4 border-b">
-                <h2 className="text-lg font-semibold">Ուսանողներ</h2>
-              </div>
-              {loading ? (
-                <div className="p-8 text-center text-slate-500">Բեռնվում է...</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-slate-50 text-left text-sm text-slate-600">
-                        <th className="px-4 py-3">ID</th>
-                        <th className="px-4 py-3">Անուն</th>
-                        <th className="px-4 py-3">Էլ. փոստ</th>
-                        <th className="px-4 py-3">QR կոդ</th>
-                        <th className="px-4 py-3">QR օգտագործում այսօր</th>
-                        <th className="px-4 py-3">QR ընդհանուր օգտագործում</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {students.map((s) => (
-                        <tr key={s.id} className="border-t border-slate-100">
-                          <td className="px-4 py-3">{s.studentId}</td>
-                          <td className="px-4 py-3">{s.name}</td>
-                          <td className="px-4 py-3">{s.email ?? '-'}</td>
-                          <td className="px-4 py-3">
-                            {s.qrToken ? (
-                              <button
-                                onClick={() => setViewingQR({ studentId: s.studentId, name: s.name, qrToken: s.qrToken! })}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 text-primary-700 hover:bg-primary-100 text-sm font-medium"
-                              >
-                                <QrCode className="w-4 h-4" />
-                                Դիտել QR
-                              </button>
-                            ) : (
-                              <span className="text-slate-400 text-sm">—</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">{s.qrUsageCount}</td>
-                          <td className="px-4 py-3">{s.qrUsageTotal}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-            {viewingQR && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setViewingQR(null)}>
-                <div className="bg-white rounded-xl p-6 max-w-sm" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">QR կոդ — {viewingQR.name}</h3>
-                    <button
-                      onClick={() => setViewingQR(null)}
-                      className="p-2 rounded-lg hover:bg-slate-100"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <QRCodeDisplay value={viewingQR.qrToken} size={220} studentName={viewingQR.name} />
-                </div>
-              </div>
-            )}
+            <StudentsTableSection
+              loading={loading}
+              students={students}
+              onCreate={handleNavigateToCreateStudent}
+              search={studentsSearch}
+              onSearchChange={handleStudentsSearchChange}
+              statusFilter={studentsStatusFilter}
+              onStatusFilterChange={handleStudentsStatusFilterChange}
+              page={studentsPage}
+              totalPages={studentsTotalPages}
+              onPageChange={setStudentsPage}
+              visibleColumns={studentVisibleColumns}
+              onToggleColumn={handleToggleStudentColumn}
+              onViewQr={handleViewQr}
+              onEdit={openEditStudent}
+              onDelete={setStudentToDelete}
+            />
+            <StudentQrViewerModal data={viewingQR} onClose={handleCloseViewingQr} />
           </div>
         )}
 
-        {tab === 'drivers' && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            {loading ? (
-              <div className="p-8 text-center text-slate-500">Բեռնվում է...</div>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-slate-50 text-left text-sm text-slate-600">
-                    <th className="px-4 py-3">Անուն</th>
-                    <th className="px-4 py-3">Էլ. փոստ</th>
-                    <th className="px-4 py-3">Ավտոբուս</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {drivers.map((d) => (
-                    <tr key={d.id} className="border-t border-slate-100">
-                      <td className="px-4 py-3">{d.name}</td>
-                      <td className="px-4 py-3">{d.email}</td>
-                      <td className="px-4 py-3">{d.bus?.plateNumber ?? '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+        {section === "drivers" && (
+          <DriversTableSection
+            loading={loading}
+            drivers={drivers}
+            search={driversSearch}
+            onSearchChange={(value) => {
+              setDriversSearch(value);
+              setDriversPage(1);
+            }}
+            page={driversPage}
+            totalPages={driversTotalPages}
+            onPageChange={setDriversPage}
+          />
         )}
 
-        {tab === 'buses' && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            {loading ? (
-              <div className="p-8 text-center text-slate-500">Բեռնվում է...</div>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-slate-50 text-left text-sm text-slate-600">
-                    <th className="px-4 py-3">Համարանիշ</th>
-                    <th className="px-4 py-3">Տարողություն</th>
-                    <th className="px-4 py-3">Սեփականատեր</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {buses.map((b) => (
-                    <tr key={b.id} className="border-t border-slate-100">
-                      <td className="px-4 py-3">{b.plateNumber}</td>
-                      <td className="px-4 py-3">{b.capacity}</td>
-                      <td className="px-4 py-3">{b.owner?.name ?? '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+        {section === "buses" && (
+          <BusesTableSection
+            loading={loading}
+            buses={buses}
+            search={busesSearch}
+            onSearchChange={(value) => {
+              setBusesSearch(value);
+              setBusesPage(1);
+            }}
+            page={busesPage}
+            totalPages={busesTotalPages}
+            onPageChange={setBusesPage}
+          />
         )}
 
-        {tab === 'owners' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                Ավելացնել ավտոբուսի սեփականատեր
-              </h2>
-              <form onSubmit={handleCreateOwner} className="space-y-3 max-w-md">
-                <input
-                  placeholder="Անուն"
-                  value={newOwner.name}
-                  onChange={(e) => setNewOwner((s) => ({ ...s, name: e.target.value }))}
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300"
-                />
-                <input
-                  type="email"
-                  placeholder="Էլ. փոստ"
-                  value={newOwner.email}
-                  onChange={(e) => setNewOwner((s) => ({ ...s, email: e.target.value }))}
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300"
-                />
-                <input
-                  placeholder="Հեռախոս (ոչ պարտադիր)"
-                  value={newOwner.phone}
-                  onChange={(e) => setNewOwner((s) => ({ ...s, phone: e.target.value }))}
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300"
-                />
-                <input
-                  type="text"
-                  placeholder="Գաղտնաբառ"
-                  value={newOwner.password}
-                  onChange={(e) => setNewOwner((s) => ({ ...s, password: e.target.value }))}
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300"
-                />
-                <button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded-lg">
-                  Ստեղծել ավտոբուսի սեփականատեր
-                </button>
-              </form>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-4 border-b">
-                <h2 className="text-lg font-semibold">Ավտոբուսի սեփականատերեր</h2>
-              </div>
-              {loading ? (
-                <div className="p-8 text-center text-slate-500">Բեռնվում է...</div>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-slate-50 text-left text-sm text-slate-600">
-                      <th className="px-4 py-3">Անուն</th>
-                      <th className="px-4 py-3">Էլ. փոստ</th>
-                      <th className="px-4 py-3">Հեռախոս</th>
-                      <th className="px-4 py-3">Ավտոբուսներ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {owners.map((o) => (
-                      <tr key={o.id} className="border-t border-slate-100">
-                        <td className="px-4 py-3">{o.name}</td>
-                        <td className="px-4 py-3">{o.email}</td>
-                        <td className="px-4 py-3">{o.phone ?? '-'}</td>
-                        <td className="px-4 py-3">{o._count?.buses ?? 0}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
+        {section === "busOwnersCreate" && (
+          <OwnersCreateSection
+            form={newOwner}
+            onSubmit={handleCreateOwner}
+            onNameChange={handleNewOwnerNameChange}
+            onEmailChange={handleNewOwnerEmailChange}
+            onPhoneChange={handleNewOwnerPhoneChange}
+            onPasswordChange={handleNewOwnerPasswordChange}
+          />
+        )}
+
+        {section === "busOwners" && (
+          <OwnersTableSection
+            loading={loading}
+            owners={owners}
+            onCreate={handleNavigateToCreateOwner}
+            search={ownersSearch}
+            onSearchChange={(value) => {
+              setOwnersSearch(value);
+              setOwnersPage(1);
+            }}
+            page={ownersPage}
+            totalPages={ownersTotalPages}
+            onPageChange={setOwnersPage}
+          />
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={Boolean(studentToDelete)}
+        title="Հեռացնե՞լ ուսանողին"
+        description={
+          studentToDelete
+            ? `${studentToDelete.name} ուսանողը կհեռացվի, ներառյալ նկարը։`
+            : ""
+        }
+        confirmText="Հեռացնել"
+        cancelText="Չեղարկել"
+        onConfirm={handleConfirmDeleteStudent}
+        onCancel={() => {
+          if (!deleteLoading) {
+            setStudentToDelete(null);
+          }
+        }}
+        loading={deleteLoading}
+      />
+
+      <StudentEditModal
+        student={studentToEdit}
+        loading={editLoading}
+        form={editStudentForm}
+        onClose={handleCloseStudentEdit}
+        onSubmit={handleEditStudent}
+        onNameChange={handleEditNameChange}
+        onEmailChange={handleEditEmailChange}
+        onIsActiveChange={handleEditIsActiveChange}
+        onImageChange={handleEditImageChange}
+      />
     </div>
   );
 }

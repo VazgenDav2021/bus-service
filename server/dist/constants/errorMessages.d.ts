@@ -1,0 +1,30 @@
+export declare const ERROR_MESSAGES: {
+    readonly validationFailed: "Վալիդացիան ձախողվեց";
+    readonly missingOrInvalidAuthorization: "Բացակայում է կամ անվավեր է authorization-ը";
+    readonly invalidOrExpiredToken: "Token-ը անվավեր է կամ ժամկետանց";
+    readonly authenticationRequired: "Պահանջվում է նույնականացում";
+    readonly insufficientPermissions: "Անբավարար իրավունքներ";
+    readonly internalServerError: "Ներքին սերվերի սխալ";
+    readonly unknownError: "Անհայտ սխալ";
+    readonly missingRefreshToken: "Refresh token-ը բացակայում է";
+    readonly invalidRefreshToken: "Refresh token-ը անվավեր է";
+    readonly invalidCredentials: "Սխալ մուտքային տվյալներ";
+    readonly tooManyRequests: "Չափազանց շատ հարցումներ";
+    readonly tooManyScanAttempts: "Չափազանց շատ սկանավորման փորձեր";
+    readonly studentIdAlreadyExists: "Ուսանողի ID-ն արդեն գոյություն ունի";
+    readonly busOwnerEmailAlreadyExists: "Ավտոբուսի սեփականատիրոջ էլ. փոստը արդեն գոյություն ունի";
+    readonly busPlateAlreadyExists: "Ավտոբուսի համարանիշը արդեն գոյություն ունի";
+    readonly driverEmailAlreadyExists: "Վարորդի էլ. փոստը արդեն գոյություն ունի";
+    readonly endDateMustBeAfterStartDate: "Ավարտի ամսաթիվը պետք է լինի մեկնարկից հետո";
+    readonly driverNotOwnedByYou: "Այս վարորդը ձեզ չի պատկանում";
+    readonly busNotOwnedByYou: "Այս ավտոբուսը ձեզ չի պատկանում";
+    readonly assignmentOverlap: "Վարորդն արդեն ունի ավտոբուսի կցում այս ամսաթվերի միջակայքում";
+    readonly driverHasNoActiveBusAssignment: "Վարորդը չունի ակտիվ ավտոբուսի կցում";
+    readonly driverNotFound: "Վարորդը չի գտնվել";
+    readonly studentNotFound: "Ուսանողը չի գտնվել";
+    readonly qrTokenRequired: "qrToken-ը պարտադիր է";
+    readonly studentQrNotFound: "Ուսանողի QR կոդը չի գտնվել";
+    readonly boardingWorkingDaysOnly: "Մուտքի գրանցումը թույլատրվում է միայն աշխատանքային օրերին";
+    readonly boardingDailyLimitReached: "Ուսանողն արդեն ունի այս աշխատանքային օրվա 2 մուտք";
+};
+//# sourceMappingURL=errorMessages.d.ts.map

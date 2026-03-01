@@ -1,9 +1,19 @@
 import { prisma } from '../../lib/prisma.js';
 import bcrypt from 'bcryptjs';
 import { AppError } from '../../middlewares/errorHandler.js';
+import { Prisma } from '@prisma/client';
 import { ERROR_CODES } from '../../constants/errorCodes.js';
 import { ERROR_MESSAGES } from '../../constants/errorMessages.js';
 import { normalizeEndOfDayUtc, normalizeStartOfDayUtc } from '../../utils/date.js';
+import {
+  buildPaginationMeta,
+  toPrismaPagination,
+  type PaginationParams,
+} from '../../utils/pagination.js';
+
+interface OwnerListQuery extends Partial<PaginationParams> {
+  search?: string;
+}
 
 export async function getBusOwnerStats(ownerId: string, _from?: Date, _to?: Date) {
   const [buses, drivers] = await Promise.all([
@@ -17,12 +27,35 @@ export async function getBusOwnerStats(ownerId: string, _from?: Date, _to?: Date
   };
 }
 
-export async function getOwnerBuses(ownerId: string) {
-  return prisma.bus.findMany({
-    where: { ownerId },
-    select: { id: true, plateNumber: true, capacity: true },
-    orderBy: { plateNumber: 'asc' },
-  });
+export async function getOwnerBuses(ownerId: string, query: OwnerListQuery) {
+  const pagination: PaginationParams = {
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? 10,
+  };
+  const where: Prisma.BusWhereInput = {
+    ownerId,
+    ...(query.search
+      ? {
+          OR: [{ plateNumber: { contains: query.search, mode: 'insensitive' } }],
+        }
+      : {}),
+  };
+  const { skip, take } = toPrismaPagination(pagination);
+  const [total, buses] = await Promise.all([
+    prisma.bus.count({ where }),
+    prisma.bus.findMany({
+      where,
+      skip,
+      take,
+      select: { id: true, plateNumber: true, capacity: true },
+      orderBy: { plateNumber: 'asc' },
+    }),
+  ]);
+
+  return {
+    buses,
+    pagination: buildPaginationMeta(pagination, total),
+  };
 }
 
 export async function createOwnerBus(
@@ -52,33 +85,57 @@ export async function createOwnerBus(
   });
 }
 
-export async function getOwnerDrivers(ownerId: string) {
+export async function getOwnerDrivers(ownerId: string, query: OwnerListQuery) {
+  const pagination: PaginationParams = {
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? 10,
+  };
   const now = new Date();
-  return prisma.driver.findMany({
-    where: { ownerId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      assignments: {
-        where: {
-          startDate: { lte: now },
-          endDate: { gte: now },
+  const where: Prisma.DriverWhereInput = {
+    ownerId,
+    ...(query.search
+      ? {
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { email: { contains: query.search, mode: 'insensitive' } },
+            { phone: { contains: query.search, mode: 'insensitive' } },
+          ],
+        }
+      : {}),
+  };
+  const { skip, take } = toPrismaPagination(pagination);
+  const [total, drivers] = await Promise.all([
+    prisma.driver.count({ where }),
+    prisma.driver.findMany({
+      where,
+      skip,
+      take,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        assignments: {
+          where: {
+            startDate: { lte: now },
+            endDate: { gte: now },
+          },
+          select: {
+            bus: { select: { id: true, plateNumber: true } },
+            startDate: true,
+            endDate: true,
+          },
+          orderBy: { startDate: 'desc' },
+          take: 1,
         },
-        select: {
-          bus: { select: { id: true, plateNumber: true } },
-          startDate: true,
-          endDate: true,
-        },
-        orderBy: { startDate: 'desc' },
-        take: 1,
+        createdAt: true,
       },
-      createdAt: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  }).then((drivers) =>
-    drivers.map((d) => ({
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
+
+  return {
+    drivers: drivers.map((d) => ({
       id: d.id,
       name: d.name,
       email: d.email,
@@ -91,8 +148,9 @@ export async function getOwnerDrivers(ownerId: string) {
           }
         : null,
       createdAt: d.createdAt,
-    }))
-  );
+    })),
+    pagination: buildPaginationMeta(pagination, total),
+  };
 }
 
 export async function createOwnerDriver(
@@ -123,19 +181,45 @@ export async function createOwnerDriver(
   });
 }
 
-export async function getOwnerAssignments(ownerId: string) {
-  return prisma.driverBusAssignment.findMany({
-    where: { bus: { ownerId } },
-    select: {
-      id: true,
-      startDate: true,
-      endDate: true,
-      driver: { select: { id: true, name: true, email: true } },
-      bus: { select: { id: true, plateNumber: true } },
-    },
-    orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
-    take: 300,
-  });
+export async function getOwnerAssignments(ownerId: string, query: OwnerListQuery) {
+  const pagination: PaginationParams = {
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? 10,
+  };
+  const where: Prisma.DriverBusAssignmentWhereInput = {
+    bus: { ownerId },
+    ...(query.search
+      ? {
+          OR: [
+            { driver: { name: { contains: query.search, mode: 'insensitive' } } },
+            { driver: { email: { contains: query.search, mode: 'insensitive' } } },
+            { bus: { plateNumber: { contains: query.search, mode: 'insensitive' } } },
+          ],
+        }
+      : {}),
+  };
+  const { skip, take } = toPrismaPagination(pagination);
+  const [total, assignments] = await Promise.all([
+    prisma.driverBusAssignment.count({ where }),
+    prisma.driverBusAssignment.findMany({
+      where,
+      skip,
+      take,
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        driver: { select: { id: true, name: true, email: true } },
+        bus: { select: { id: true, plateNumber: true } },
+      },
+      orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
+    }),
+  ]);
+
+  return {
+    assignments,
+    pagination: buildPaginationMeta(pagination, total),
+  };
 }
 
 export async function createOwnerAssignment(

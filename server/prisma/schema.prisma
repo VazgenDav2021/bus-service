@@ -101,12 +101,26 @@ model Student {
   studentId String   @unique
   name      String
   email     String?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   qrCode QRCode?
   boardings Boarding[]
+  image    StudentImage?
   @@map("students")
+}
+
+model StudentImage {
+  id        String   @id @default(cuid())
+  studentId String   @unique
+  filePath  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("student_images")
 }
 
 model QRCode {

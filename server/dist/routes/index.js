@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { authRouter } from './auth.js';
+import { adminRouter } from './admin.js';
+import { driverRouter } from './driver.js';
+import { busOwnerRouter } from './busOwner.js';
+export const apiRouter = Router();
+apiRouter.use('/auth', authRouter);
+apiRouter.use('/admin', adminRouter);
+apiRouter.use('/driver', driverRouter);
+apiRouter.use('/bus-owner', busOwnerRouter);

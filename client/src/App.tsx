@@ -57,7 +57,7 @@ export default function App() {
         }
       />
       <Route
-        path={APP_ROUTES.admin}
+        path={`${APP_ROUTES.admin}/*`}
         element={
           <ProtectedRoute roles={['ADMIN']}>
             <AdminDashboard />
@@ -65,7 +65,7 @@ export default function App() {
         }
       />
       <Route
-        path={APP_ROUTES.busOwner}
+        path={`${APP_ROUTES.busOwner}/*`}
         element={
           <ProtectedRoute roles={['BUS_OWNER']}>
             <BusOwnerDashboard />

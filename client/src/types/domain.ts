@@ -17,6 +17,8 @@ export interface StudentListItem {
   studentId: string;
   name: string;
   email: string | null;
+  isActive: boolean;
+  imageUrl: string | null;
   qrToken: string | null;
   qrUsageCount: number;
   qrUsageTotal: number;

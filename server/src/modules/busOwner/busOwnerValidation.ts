@@ -19,6 +19,17 @@ export const createAssignmentSchema = z.object({
   endDate: z.string().datetime(),
 });
 
+export const paginatedListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(10),
+  search: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined)),
+});
+
 export type CreateBusInput = z.infer<typeof createBusSchema>;
 export type CreateDriverInput = z.infer<typeof createDriverSchema>;
 export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
+export type PaginatedListQueryInput = z.infer<typeof paginatedListQuerySchema>;
