@@ -1,0 +1,494 @@
+{
+  "info": {
+    "_postman_id": "e1c0d8b1-59f0-4f89-9bc5-44d50f1df7cb",
+    "name": "Student Transportation Management API",
+    "description": "Structured Postman collection for all API requests in the Student Transportation Management System.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "apiPrefix", "value": "api" },
+    { "key": "driverAccessToken", "value": "" },
+    { "key": "driverRefreshToken", "value": "" },
+    { "key": "adminAccessToken", "value": "" },
+    { "key": "ownerAccessToken", "value": "" },
+    { "key": "busId", "value": "" },
+    { "key": "studentId", "value": "" },
+    { "key": "driverId", "value": "" },
+    { "key": "ownerId", "value": "" },
+    { "key": "qrToken", "value": "" },
+    { "key": "fromIso", "value": "2026-01-01T00:00:00.000Z" },
+    { "key": "toIso", "value": "2026-12-31T23:59:59.999Z" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Simple health endpoint."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login - Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('adminAccessToken', json.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@municipality.gov\",\n  \"password\": \"Admin123!\",\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Driver",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('driverAccessToken', json.accessToken);",
+                  "}",
+                  "if (json.refreshToken) {",
+                  "  pm.collectionVariables.set('driverRefreshToken', json.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"driver@bustransport.com\",\n  \"password\": \"Admin123!\",\n  \"role\": \"DRIVER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Bus Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('ownerAccessToken', json.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@bustransport.com\",\n  \"password\": \"Admin123!\",\n  \"role\": \"BUS_OWNER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token - Driver",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{driverRefreshToken}}\",\n  \"role\": \"DRIVER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "refresh"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shifts (Driver)",
+      "item": [
+        {
+          "name": "Start Shift",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{driverAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"busId\": \"{{busId}}\",\n  \"startTime\": \"2026-02-28T08:00:00.000Z\",\n  \"endTime\": \"2026-02-28T16:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/shifts/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "shifts", "start"]
+            }
+          }
+        },
+        {
+          "name": "List Driver Shifts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{driverAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/shifts?from={{fromIso}}&to={{toIso}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "shifts"],
+              "query": [
+                { "key": "from", "value": "{{fromIso}}" },
+                { "key": "to", "value": "{{toIso}}" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scan (Driver Only)",
+      "item": [
+        {
+          "name": "Scan TO_UNIVERSITY",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{driverAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrToken\": \"{{qrToken}}\",\n  \"direction\": \"TO_UNIVERSITY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/scan",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "scan"]
+            },
+            "description": "Only authenticated drivers with active shifts can perform this request."
+          }
+        },
+        {
+          "name": "Scan FROM_UNIVERSITY",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{driverAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrToken\": \"{{qrToken}}\",\n  \"direction\": \"FROM_UNIVERSITY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/scan",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "scan"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Driver",
+      "item": [
+        {
+          "name": "Get My Driver Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{driverAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/driver/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "driver", "me"]
+            }
+          }
+        },
+        {
+          "name": "Driver Report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{driverAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/driver/report?from={{fromIso}}&to={{toIso}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "driver", "report"],
+              "query": [
+                { "key": "from", "value": "{{fromIso}}" },
+                { "key": "to", "value": "{{toIso}}" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Trips",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/admin/trips?from={{fromIso}}&to={{toIso}}&driverId={{driverId}}&busId={{busId}}&studentId={{studentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "admin", "trips"],
+              "query": [
+                { "key": "from", "value": "{{fromIso}}" },
+                { "key": "to", "value": "{{toIso}}" },
+                { "key": "driverId", "value": "{{driverId}}" },
+                { "key": "busId", "value": "{{busId}}" },
+                { "key": "studentId", "value": "{{studentId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/admin/analytics?from={{fromIso}}&to={{toIso}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "admin", "analytics"],
+              "query": [
+                { "key": "from", "value": "{{fromIso}}" },
+                { "key": "to", "value": "{{toIso}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Students",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/admin/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "admin", "students"]
+            }
+          }
+        },
+        {
+          "name": "Create Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"STU-999\",\n  \"name\": \"New Student\",\n  \"email\": \"new.student@university.edu\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/admin/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "admin", "students"]
+            }
+          }
+        },
+        {
+          "name": "List Drivers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/admin/drivers",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "admin", "drivers"]
+            }
+          }
+        },
+        {
+          "name": "List Buses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/admin/buses",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "admin", "buses"]
+            }
+          }
+        },
+        {
+          "name": "List Bus Owners",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/admin/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "admin", "owners"]
+            }
+          }
+        },
+        {
+          "name": "Create Bus Owner",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Bus Owner\",\n  \"email\": \"new.owner@bustransport.com\",\n  \"phone\": \"+1234567892\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/admin/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "admin", "owners"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bus Owner",
+      "item": [
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/bus-owner/stats?from={{fromIso}}&to={{toIso}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bus-owner", "stats"],
+              "query": [
+                { "key": "from", "value": "{{fromIso}}" },
+                { "key": "to", "value": "{{toIso}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Owner Buses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/bus-owner/buses",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bus-owner", "buses"]
+            }
+          }
+        },
+        {
+          "name": "List Owner Drivers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/bus-owner/drivers",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bus-owner", "drivers"]
+            }
+          }
+        },
+        {
+          "name": "Create Driver (Owner Scoped)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Driver\",\n  \"email\": \"new.driver@bustransport.com\",\n  \"phone\": \"+1234567893\",\n  \"password\": \"Admin123!\",\n  \"busId\": \"{{busId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/bus-owner/drivers",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bus-owner", "drivers"]
+            },
+            "description": "Bus owner can only assign driver to buses they own."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swagger",
+      "item": [
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/docs.json",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "docs.json"]
+            }
+          }
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiPrefix}}/docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "docs"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

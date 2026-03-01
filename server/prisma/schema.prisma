@@ -1,0 +1,140 @@
+// Student Transportation Management System
+// Municipal-grade production schema
+// All timestamps in UTC
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DRIVER
+  BUS_OWNER
+  STUDENT
+}
+
+enum TripDirection {
+  TO
+  FROM
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model BusOwner {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  buses   Bus[]
+  drivers Driver[]
+
+  @@map("bus_owners")
+}
+
+model Bus {
+  id         String   @id @default(cuid())
+  plateNumber String  @unique
+  capacity   Int
+  ownerId    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner        BusOwner              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  assignments  DriverBusAssignment[]
+  boardings    Boarding[]
+  @@map("buses")
+}
+
+model Driver {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  ownerId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner       BusOwner?             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  assignments DriverBusAssignment[]
+  boardings   Boarding[]
+  @@map("drivers")
+}
+
+model DriverBusAssignment {
+  id        String   @id @default(cuid())
+  driverId  String
+  busId     String
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  bus    Bus    @relation(fields: [busId], references: [id], onDelete: Cascade)
+
+  @@index([driverId, startDate, endDate])
+  @@index([busId, startDate, endDate])
+  @@map("driver_bus_assignments")
+}
+
+model Student {
+  id        String   @id @default(cuid())
+  studentId String   @unique
+  name      String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  qrCode QRCode?
+  boardings Boarding[]
+  @@map("students")
+}
+
+model QRCode {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  studentId String   @unique
+  createdAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("qr_codes")
+}
+
+model Boarding {
+  id           String   @id @default(cuid())
+  studentId    String
+  driverId     String
+  busId        String
+  boardedAt    DateTime @default(now())
+  calendarDate DateTime
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  driver  Driver  @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  bus     Bus     @relation(fields: [busId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, calendarDate])
+  @@index([driverId, boardedAt])
+  @@index([busId, boardedAt])
+  @@map("boardings")
+}
+
