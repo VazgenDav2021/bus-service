@@ -1,10 +1,11 @@
 import { config } from '../config.js';
 import { AUTH_COOKIE_NAMES, AUTH_REFRESH_COOKIE_MAX_AGE_MS, } from '../constants/auth.js';
 function baseCookieOptions() {
+    const isProduction = config.nodeEnv === 'production';
     return {
         httpOnly: true,
-        secure: config.nodeEnv === 'production',
-        sameSite: 'lax',
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
         path: '/',
     };
 }

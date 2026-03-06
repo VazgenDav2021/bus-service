@@ -6,10 +6,11 @@ import {
 } from '../constants/auth.js';
 
 function baseCookieOptions() {
+  const isProduction = config.nodeEnv === 'production';
   return {
     httpOnly: true,
-    secure: config.nodeEnv === 'production',
-    sameSite: 'lax' as const,
+    secure: isProduction,
+    sameSite: isProduction ? ('none' as const) : ('lax' as const),
     path: '/',
   };
 }
