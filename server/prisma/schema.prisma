@@ -58,7 +58,6 @@ model Bus {
   updatedAt  DateTime @updatedAt
 
   owner        BusOwner              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  assignments  DriverBusAssignment[]
   boardings    Boarding[]
   @@map("buses")
 }
@@ -74,26 +73,8 @@ model Driver {
   updatedAt DateTime @updatedAt
 
   owner       BusOwner?             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  assignments DriverBusAssignment[]
   boardings   Boarding[]
   @@map("drivers")
-}
-
-model DriverBusAssignment {
-  id        String   @id @default(cuid())
-  driverId  String
-  busId     String
-  startDate DateTime
-  endDate   DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  bus    Bus    @relation(fields: [busId], references: [id], onDelete: Cascade)
-
-  @@index([driverId, startDate, endDate])
-  @@index([busId, startDate, endDate])
-  @@map("driver_bus_assignments")
 }
 
 model Student {

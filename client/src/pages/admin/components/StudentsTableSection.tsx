@@ -9,8 +9,6 @@ export const STUDENT_COLUMN_KEYS = [
   "image",
   "status",
   "qrToken",
-  "qrUsageCount",
-  "qrUsageTotal",
   "actions",
 ] as const;
 
@@ -92,8 +90,6 @@ export const StudentsTableSection = memo(function StudentsTableSection({
               { key: "image", label: "Նկար" },
               { key: "status", label: "Կարգավիճակ" },
               { key: "qrToken", label: "QR կոդ" },
-              { key: "qrUsageCount", label: "QR այսօր" },
-              { key: "qrUsageTotal", label: "QR ընդհանուր" },
               { key: "actions", label: "Գործողություն" },
             ].map(({ key, label }) => (
               <label key={key} className="flex items-center gap-2 text-sm text-slate-700">
@@ -121,12 +117,6 @@ export const StudentsTableSection = memo(function StudentsTableSection({
                 {visibleColumns.image && <th className="px-4 py-3">Նկար</th>}
                 {visibleColumns.status && <th className="px-4 py-3">Կարգավիճակ</th>}
                 {visibleColumns.qrToken && <th className="px-4 py-3">QR կոդ</th>}
-                {visibleColumns.qrUsageCount && (
-                  <th className="px-4 py-3">QR օգտագործում այսօր</th>
-                )}
-                {visibleColumns.qrUsageTotal && (
-                  <th className="px-4 py-3">QR ընդհանուր օգտագործում</th>
-                )}
                 {visibleColumns.actions && <th className="px-4 py-3">Գործողություն</th>}
               </tr>
             </thead>
@@ -173,12 +163,6 @@ export const StudentsTableSection = memo(function StudentsTableSection({
                         <span className="text-slate-400 text-sm">—</span>
                       )}
                     </td>
-                  )}
-                  {visibleColumns.qrUsageCount && (
-                    <td className="px-4 py-3">{s.qrUsageCount}</td>
-                  )}
-                  {visibleColumns.qrUsageTotal && (
-                    <td className="px-4 py-3">{s.qrUsageTotal}</td>
                   )}
                   {visibleColumns.actions && (
                     <td className="px-4 py-3">

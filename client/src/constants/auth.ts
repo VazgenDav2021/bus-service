@@ -3,7 +3,7 @@ import type { Role } from '../types/domain';
 export const APP_ROLES: Role[] = ['DRIVER', 'ADMIN', 'BUS_OWNER'];
 
 export const ROLE_EMAILS: Record<Role, string[]> = {
-  DRIVER: ["minasyan@gmail.com"],
+  DRIVER: ["driver@bustransport.com"],
   ADMIN: ["admin@municipality.gov"],
   BUS_OWNER: ["owner@bustransport.com"],
 };

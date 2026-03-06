@@ -29,6 +29,7 @@ export const createStudentSchema = z.object({
 });
 
 export const updateStudentSchema = z.object({
+  studentId: z.string().min(1),
   name: z.string().min(1),
   email: z.preprocess(
     (value) =>

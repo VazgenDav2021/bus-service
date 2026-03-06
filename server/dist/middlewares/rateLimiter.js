@@ -9,13 +9,3 @@ export const rateLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
-export const scanRateLimiter = rateLimit({
-    windowMs: config.rateLimit.windowMs,
-    max: config.rateLimit.scanMax,
-    message: {
-        error: ERROR_MESSAGES.tooManyScanAttempts,
-        code: ERROR_CODES.scanRateLimitExceeded,
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-});

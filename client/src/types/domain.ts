@@ -1,15 +1,14 @@
 export type Role = 'ADMIN' | 'DRIVER' | 'BUS_OWNER';
 
-export interface BusRef {
-  id: string;
-  plateNumber: string;
-}
-
 export interface DriverProfile {
   id: string;
   name: string;
   email: string;
-  bus: BusRef | null;
+}
+
+export interface BusRef {
+  id: string;
+  plateNumber: string;
 }
 
 export interface StudentListItem {
@@ -20,8 +19,6 @@ export interface StudentListItem {
   isActive: boolean;
   imageUrl: string | null;
   qrToken: string | null;
-  qrUsageCount: number;
-  qrUsageTotal: number;
 }
 
 export interface DriverListItem {
@@ -29,11 +26,6 @@ export interface DriverListItem {
   name: string;
   email: string;
   phone: string | null;
-  bus: { plateNumber: string } | null;
-  activeAssignment?: {
-    startDate: string;
-    endDate: string;
-  } | null;
 }
 
 export interface OwnerListItem {
@@ -41,26 +33,20 @@ export interface OwnerListItem {
   name: string;
   email: string;
   phone: string | null;
-  _count?: { buses: number };
 }
 
-export interface BusListItem {
-  id: string;
-  plateNumber: string;
-  capacity: number;
-  owner?: { name: string; email?: string };
-}
-
-export interface AssignmentListItem {
-  id: string;
-  startDate: string;
-  endDate: string;
-  driver: { id: string; name: string; email?: string };
-  bus: { id: string; plateNumber: string };
+export interface OwnerStats {
+  drivers: number;
 }
 
 export interface StudentScanResult {
-  student: { id: string; studentId: string; name: string; email: string | null };
+  student: {
+    id: string;
+    studentId: string;
+    name: string;
+    email: string | null;
+    imageUrl: string | null;
+  };
   bus: BusRef;
 }
 
@@ -69,9 +55,4 @@ export interface BoardingResult {
   message: string;
   student: { studentId: string; name: string };
   bus: BusRef;
-}
-
-export interface OwnerStats {
-  buses: number;
-  drivers: number;
 }

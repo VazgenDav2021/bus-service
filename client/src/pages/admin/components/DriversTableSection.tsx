@@ -39,7 +39,7 @@ export const DriversTableSection = memo(function DriversTableSection({
             <tr className="bg-slate-50 text-left text-sm text-slate-600">
               <th className="px-4 py-3">Անուն</th>
               <th className="px-4 py-3">Էլ. փոստ</th>
-              <th className="px-4 py-3">Ավտոբուս</th>
+              <th className="px-4 py-3">Հեռախոս</th>
             </tr>
           </thead>
           <tbody>
@@ -47,7 +47,7 @@ export const DriversTableSection = memo(function DriversTableSection({
               <tr key={d.id} className="border-t border-slate-100">
                 <td className="px-4 py-3">{d.name}</td>
                 <td className="px-4 py-3">{d.email}</td>
-                <td className="px-4 py-3">{d.bus?.plateNumber ?? "-"}</td>
+                <td className="px-4 py-3">{d.phone ?? "-"}</td>
               </tr>
             ))}
           </tbody>

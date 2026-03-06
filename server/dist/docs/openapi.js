@@ -38,7 +38,7 @@ export function getOpenApiSpec() {
             },
             '/driver/scan/board': {
                 post: {
-                    summary: 'Submit student entrance to bus',
+                    summary: 'Create boarding from scanned QR',
                     tags: ['Driver'],
                     security: [{ cookieAuth: [] }],
                     responses: { '201': { description: 'Created' } },
@@ -66,14 +66,6 @@ export function getOpenApiSpec() {
                     responses: { '200': { description: 'OK' } },
                 },
             },
-            '/admin/buses': {
-                get: {
-                    summary: 'List buses',
-                    tags: ['Admin'],
-                    security: [{ cookieAuth: [] }],
-                    responses: { '200': { description: 'OK' } },
-                },
-            },
             '/admin/owners': {
                 get: {
                     summary: 'List bus owners',
@@ -84,28 +76,6 @@ export function getOpenApiSpec() {
                 post: {
                     summary: 'Create bus owner',
                     tags: ['Admin'],
-                    security: [{ cookieAuth: [] }],
-                    responses: { '201': { description: 'Created' } },
-                },
-            },
-            '/bus-owner/stats': {
-                get: {
-                    summary: 'Owner dashboard counts',
-                    tags: ['Bus Owner'],
-                    security: [{ cookieAuth: [] }],
-                    responses: { '200': { description: 'OK' } },
-                },
-            },
-            '/bus-owner/buses': {
-                get: {
-                    summary: 'List owner buses',
-                    tags: ['Bus Owner'],
-                    security: [{ cookieAuth: [] }],
-                    responses: { '200': { description: 'OK' } },
-                },
-                post: {
-                    summary: 'Create owner bus',
-                    tags: ['Bus Owner'],
                     security: [{ cookieAuth: [] }],
                     responses: { '201': { description: 'Created' } },
                 },
@@ -124,18 +94,12 @@ export function getOpenApiSpec() {
                     responses: { '201': { description: 'Created' } },
                 },
             },
-            '/bus-owner/assignments': {
+            '/bus-owner/drivers/{driverId}/scans': {
                 get: {
-                    summary: 'List driver-bus assignments',
+                    summary: 'Get scans history for owner driver',
                     tags: ['Bus Owner'],
                     security: [{ cookieAuth: [] }],
                     responses: { '200': { description: 'OK' } },
-                },
-                post: {
-                    summary: 'Create driver-bus assignment with dates',
-                    tags: ['Bus Owner'],
-                    security: [{ cookieAuth: [] }],
-                    responses: { '201': { description: 'Created' } },
                 },
             },
         },

@@ -1,11 +1,7 @@
 export declare function getDriverProfile(driverId: string): Promise<{
     id: string;
-    name: string;
     email: string;
-    bus: {
-        id: string;
-        plateNumber: string;
-    } | null;
+    name: string;
 }>;
 export declare function getStudentByQr(driverId: string, qrToken: string): Promise<{
     student: {
@@ -13,6 +9,7 @@ export declare function getStudentByQr(driverId: string, qrToken: string): Promi
         studentId: string;
         name: string;
         email: string | null;
+        imageUrl: string | null;
     };
     bus: {
         id: string;

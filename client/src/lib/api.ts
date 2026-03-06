@@ -1,22 +1,19 @@
 import type { Role } from '../types/domain';
 import type {
-  AssignmentListResponse,
   BoardingResponse,
-  BusListResponse,
-  CreateBusResponse,
   CreateDriverResponse,
   CreateOwnerResponse,
   CreateStudentPayload,
   CreateStudentResponse,
   DriverListResponse,
+  DriverScanListResponse,
   DriverMeResponse,
   LoginResponse,
   ListQueryParams,
   OwnerListResponse,
-  OwnerStatsResponse,
   RefreshResponse,
-  StudentListResponse,
   StudentScanResponse,
+  StudentListResponse,
   UpdateStudentPayload,
 } from '../types/api';
 
@@ -105,8 +102,6 @@ export const api = {
   admin: {
     drivers: (params?: ListQueryParams) =>
       request<DriverListResponse>(`/admin/drivers${toQueryString(params)}`),
-    buses: (params?: ListQueryParams) =>
-      request<BusListResponse>(`/admin/buses${toQueryString(params)}`),
     owners: (params?: ListQueryParams) =>
       request<OwnerListResponse>(`/admin/owners${toQueryString(params)}`),
     students: (params?: ListQueryParams) =>
@@ -132,6 +127,7 @@ export const api = {
       }),
     updateStudent: (id: string, payload: UpdateStudentPayload) => {
       const formData = new FormData();
+      formData.set('studentId', payload.studentId);
       formData.set('name', payload.name);
       formData.set('isActive', String(payload.isActive));
       if (payload.email) {
@@ -152,19 +148,12 @@ export const api = {
       }),
   },
   busOwner: {
-    stats: (from?: string, to?: string) =>
-      request<OwnerStatsResponse>(
-        `/bus-owner/stats?${from ? `from=${from}` : ''}${to ? `&to=${to}` : ''}`
-      ),
-    buses: (params?: ListQueryParams) =>
-      request<BusListResponse>(`/bus-owner/buses${toQueryString(params)}`),
-    createBus: (plateNumber: string, capacity: number) =>
-      request<CreateBusResponse>('/bus-owner/buses', {
-        method: 'POST',
-        body: JSON.stringify({ plateNumber, capacity }),
-      }),
     drivers: (params?: ListQueryParams) =>
       request<DriverListResponse>(`/bus-owner/drivers${toQueryString(params)}`),
+    driverScans: (driverId: string, params?: ListQueryParams) =>
+      request<DriverScanListResponse>(
+        `/bus-owner/drivers/${driverId}/scans${toQueryString(params)}`
+      ),
     createDriver: (
       name: string,
       email: string,
@@ -174,18 +163,6 @@ export const api = {
       request<CreateDriverResponse>('/bus-owner/drivers', {
         method: 'POST',
         body: JSON.stringify({ name, email, password, phone }),
-      }),
-    assignments: (params?: ListQueryParams) =>
-      request<AssignmentListResponse>(`/bus-owner/assignments${toQueryString(params)}`),
-    createAssignment: (
-      driverId: string,
-      busId: string,
-      startDate: string,
-      endDate: string
-    ) =>
-      request<AssignmentListResponse['assignments'][number]>('/bus-owner/assignments', {
-        method: 'POST',
-        body: JSON.stringify({ driverId, busId, startDate, endDate }),
       }),
   },
 };

@@ -22,6 +22,7 @@ export const createStudentSchema = z.object({
     }, z.boolean()),
 });
 export const updateStudentSchema = z.object({
+    studentId: z.string().min(1),
     name: z.string().min(1),
     email: z.preprocess((value) => typeof value === 'string' && value.trim() === '' ? undefined : value, z.string().email().optional()),
     isActive: z.preprocess((value) => {

@@ -61,22 +61,14 @@ export function DriverDashboard() {
       <main className="max-w-lg mx-auto p-4 pb-8">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="text-lg font-semibold text-slate-800 mb-2">Վարորդի պրոֆիլ</h2>
-          {driverInfo.bus ? (
-            <p className="text-slate-600">
-              Կցված ավտոբուս՝ <strong>{driverInfo.bus.plateNumber}</strong>
-            </p>
-          ) : (
-            <p className="text-amber-600">
-              Դուք ավտոբուսի կցում չունեք։ Կապվեք ադմինիստրատորի հետ։
-            </p>
-          )}
+          <p className="text-slate-600">Անուն՝ <strong>{driverInfo.name}</strong></p>
+          <p className="text-slate-600">Էլ. փոստ՝ <strong>{driverInfo.email}</strong></p>
           <button
             onClick={() => navigate(APP_ROUTES.driverScan)}
-            disabled={!driverInfo.bus}
-            className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white disabled:opacity-60"
+            className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white"
           >
             <QrCode className="w-4 h-4" />
-            Բացել սկանավորման և մուտքագրման էջը
+            Բացել QR սկանավորման էջը
           </button>
         </div>
       </main>

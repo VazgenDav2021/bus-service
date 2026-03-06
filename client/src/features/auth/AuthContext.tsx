@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    void api.auth.logout().catch(() => undefined);
+    api.auth.logout().catch(() => undefined);
     localStorage.removeItem('role');
     localStorage.removeItem('expiresAt');
     setUser(null);

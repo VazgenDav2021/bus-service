@@ -51,7 +51,6 @@ export const OwnersTableSection = memo(function OwnersTableSection({
                 <th className="px-4 py-3">Անուն</th>
                 <th className="px-4 py-3">Էլ. փոստ</th>
                 <th className="px-4 py-3">Հեռախոս</th>
-                <th className="px-4 py-3">Ավտոբուսներ</th>
               </tr>
             </thead>
             <tbody>
@@ -60,7 +59,6 @@ export const OwnersTableSection = memo(function OwnersTableSection({
                   <td className="px-4 py-3">{o.name}</td>
                   <td className="px-4 py-3">{o.email}</td>
                   <td className="px-4 py-3">{o.phone ?? "-"}</td>
-                  <td className="px-4 py-3">{o._count?.buses ?? 0}</td>
                 </tr>
               ))}
             </tbody>

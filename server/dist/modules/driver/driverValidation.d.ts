@@ -13,6 +13,4 @@ export declare const createBoardingSchema: z.ZodObject<{
 }, {
     qrToken: string;
 }>;
-export type StudentScanQueryInput = z.infer<typeof studentScanQuerySchema>;
-export type CreateBoardingInput = z.infer<typeof createBoardingSchema>;
 //# sourceMappingURL=driverValidation.d.ts.map

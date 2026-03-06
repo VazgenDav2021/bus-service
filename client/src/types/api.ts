@@ -1,14 +1,12 @@
 import type {
-  AssignmentListItem,
   BoardingResult,
-  BusListItem,
   DriverListItem,
   DriverProfile,
   OwnerListItem,
   OwnerStats,
   Role,
-  StudentListItem,
   StudentScanResult,
+  StudentListItem,
 } from './domain';
 
 export interface LoginResponse {
@@ -25,8 +23,23 @@ export interface DriverListResponse {
   pagination: PaginationMeta;
 }
 
-export interface BusListResponse {
-  buses: BusListItem[];
+export interface DriverScanListResponse {
+  driver: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string | null;
+  };
+  scans: Array<{
+    id: string;
+    scannedAt: string;
+    student: {
+      id: string;
+      studentId: string;
+      name: string;
+      email: string | null;
+    };
+  }>;
   pagination: PaginationMeta;
 }
 
@@ -41,11 +54,6 @@ export interface StudentListResponse {
 }
 
 export interface OwnerStatsResponse extends OwnerStats {}
-
-export interface AssignmentListResponse {
-  assignments: AssignmentListItem[];
-  pagination: PaginationMeta;
-}
 
 export interface PaginationMeta {
   page: number;
@@ -79,6 +87,7 @@ export interface CreateStudentPayload {
 }
 
 export interface UpdateStudentPayload {
+  studentId: string;
   name: string;
   email?: string;
   isActive: boolean;
@@ -96,13 +105,6 @@ export interface CreateOwnerResponse {
 export type CreateDriverResponse = Omit<CreateOwnerResponse, 'phone'> & {
   phone: string | null;
 };
-
-export interface CreateBusResponse {
-  id: string;
-  plateNumber: string;
-  capacity: number;
-  createdAt: string;
-}
 
 export type DriverMeResponse = DriverProfile;
 export type StudentScanResponse = StudentScanResult;

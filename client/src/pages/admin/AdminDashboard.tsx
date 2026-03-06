@@ -5,7 +5,6 @@ import { api } from "../../lib/api";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { toast } from "react-toastify";
 import type {
-  BusListItem,
   DriverListItem,
   OwnerListItem,
   StudentListItem,
@@ -22,7 +21,6 @@ import {
   type StudentColumnKey,
 } from "./components/StudentsTableSection";
 import { DriversTableSection } from "./components/DriversTableSection";
-import { BusesTableSection } from "./components/BusesTableSection";
 import { OwnersCreateSection } from "./components/OwnersCreateSection";
 import { OwnersTableSection } from "./components/OwnersTableSection";
 import { StudentQrViewerModal } from "./components/StudentQrViewerModal";
@@ -32,7 +30,6 @@ type AdminSection =
   | "students"
   | "studentsCreate"
   | "drivers"
-  | "buses"
   | "busOwners"
   | "busOwnersCreate";
 
@@ -40,7 +37,6 @@ const ADMIN_ROUTE_PATHS = {
   students: "/admin/students",
   studentsCreate: "/admin/students-create",
   drivers: "/admin/drivers",
-  buses: "/admin/buses",
   busOwners: "/admin/bus-owners",
   busOwnersCreate: "/admin/bus-owners/create",
 } as const;
@@ -50,7 +46,6 @@ function getAdminSection(pathname: string): AdminSection | null {
   if (pathname === ADMIN_ROUTE_PATHS.students) return "students";
   if (pathname === ADMIN_ROUTE_PATHS.studentsCreate) return "studentsCreate";
   if (pathname === ADMIN_ROUTE_PATHS.drivers) return "drivers";
-  if (pathname === ADMIN_ROUTE_PATHS.buses) return "buses";
   if (pathname === ADMIN_ROUTE_PATHS.busOwners) return "busOwners";
   if (pathname === ADMIN_ROUTE_PATHS.busOwnersCreate) return "busOwnersCreate";
   return null;
@@ -63,7 +58,6 @@ export function AdminDashboard() {
   const section = getAdminSection(location.pathname);
   const [students, setStudents] = useState<StudentListItem[]>([]);
   const [drivers, setDrivers] = useState<DriverListItem[]>([]);
-  const [buses, setBuses] = useState<BusListItem[]>([]);
   const [owners, setOwners] = useState<OwnerListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [newStudent, setNewStudent] = useState({
@@ -96,6 +90,7 @@ export function AdminDashboard() {
   );
   const [editLoading, setEditLoading] = useState(false);
   const [editStudentForm, setEditStudentForm] = useState({
+    studentId: "",
     name: "",
     email: "",
     isActive: true,
@@ -110,9 +105,6 @@ export function AdminDashboard() {
   const [driversPage, setDriversPage] = useState(1);
   const [driversTotalPages, setDriversTotalPages] = useState(1);
   const [driversSearch, setDriversSearch] = useState("");
-  const [busesPage, setBusesPage] = useState(1);
-  const [busesTotalPages, setBusesTotalPages] = useState(1);
-  const [busesSearch, setBusesSearch] = useState("");
   const [ownersPage, setOwnersPage] = useState(1);
   const [ownersTotalPages, setOwnersTotalPages] = useState(1);
   const [ownersSearch, setOwnersSearch] = useState("");
@@ -125,8 +117,6 @@ export function AdminDashboard() {
     image: true,
     status: true,
     qrToken: true,
-    qrUsageCount: true,
-    qrUsageTotal: true,
     actions: true,
   });
 
@@ -176,21 +166,6 @@ export function AdminDashboard() {
     }
   }, [driversPage, driversSearch]);
 
-  const fetchBuses = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await api.admin.buses({
-        page: busesPage,
-        pageSize: PAGE_SIZE,
-        search: busesSearch,
-      });
-      setBuses(response.buses);
-      setBusesTotalPages(response.pagination.totalPages);
-    } finally {
-      setLoading(false);
-    }
-  }, [busesPage, busesSearch]);
-
   const fetchOwners = useCallback(async () => {
     setLoading(true);
     try {
@@ -208,15 +183,13 @@ export function AdminDashboard() {
 
   useEffect(() => {
     if (section === "students") {
-      void fetchStudents();
+      fetchStudents();
     } else if (section === "drivers") {
-      void fetchDrivers();
-    } else if (section === "buses") {
-      void fetchBuses();
+      fetchDrivers();
     } else if (section === "busOwners") {
-      void fetchOwners();
+      fetchOwners();
     }
-  }, [section, fetchStudents, fetchDrivers, fetchBuses, fetchOwners]);
+  }, [section, fetchStudents, fetchDrivers, fetchOwners]);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -359,6 +332,7 @@ export function AdminDashboard() {
   const openEditStudent = useCallback((student: StudentListItem) => {
     setStudentToEdit(student);
     setEditStudentForm({
+      studentId: student.studentId,
       name: student.name,
       email: student.email ?? "",
       isActive: student.isActive,
@@ -378,6 +352,10 @@ export function AdminDashboard() {
 
   const handleCloseViewingQr = useCallback(() => {
     setViewingQR(null);
+  }, []);
+
+  const handleEditStudentIdChange = useCallback((value: string) => {
+    setEditStudentForm((s) => ({ ...s, studentId: value }));
   }, []);
 
   const handleEditNameChange = useCallback((value: string) => {
@@ -406,6 +384,7 @@ export function AdminDashboard() {
     setEditLoading(true);
     try {
       const updated = await api.admin.updateStudent(studentToEdit.id, {
+        studentId: editStudentForm.studentId,
         name: editStudentForm.name,
         email: editStudentForm.email || undefined,
         isActive: editStudentForm.isActive,
@@ -416,6 +395,7 @@ export function AdminDashboard() {
           student.id === studentToEdit.id
             ? {
                 ...student,
+                studentId: updated.studentId,
                 name: updated.name,
                 email: updated.email,
                 isActive: updated.isActive,
@@ -501,21 +481,6 @@ export function AdminDashboard() {
           />
         )}
 
-        {section === "buses" && (
-          <BusesTableSection
-            loading={loading}
-            buses={buses}
-            search={busesSearch}
-            onSearchChange={(value) => {
-              setBusesSearch(value);
-              setBusesPage(1);
-            }}
-            page={busesPage}
-            totalPages={busesTotalPages}
-            onPageChange={setBusesPage}
-          />
-        )}
-
         {section === "busOwnersCreate" && (
           <OwnersCreateSection
             form={newOwner}
@@ -569,6 +534,7 @@ export function AdminDashboard() {
         form={editStudentForm}
         onClose={handleCloseStudentEdit}
         onSubmit={handleEditStudent}
+        onStudentIdChange={handleEditStudentIdChange}
         onNameChange={handleEditNameChange}
         onEmailChange={handleEditEmailChange}
         onIsActiveChange={handleEditIsActiveChange}

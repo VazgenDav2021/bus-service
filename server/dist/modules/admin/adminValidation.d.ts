@@ -29,15 +29,18 @@ export declare const createStudentSchema: z.ZodObject<{
     isActive?: unknown;
 }>;
 export declare const updateStudentSchema: z.ZodObject<{
+    studentId: z.ZodString;
     name: z.ZodString;
     email: z.ZodEffects<z.ZodOptional<z.ZodString>, string | undefined, unknown>;
     isActive: z.ZodEffects<z.ZodBoolean, boolean, unknown>;
 }, "strip", z.ZodTypeAny, {
     name: string;
     isActive: boolean;
+    studentId: string;
     email?: string | undefined;
 }, {
     name: string;
+    studentId: string;
     email?: unknown;
     isActive?: unknown;
 }>;
@@ -50,9 +53,9 @@ export declare const paginatedListQuerySchema: z.ZodObject<{
     pageSize: number;
     search?: string | undefined;
 }, {
-    search?: string | undefined;
     page?: number | undefined;
     pageSize?: number | undefined;
+    search?: string | undefined;
 }>;
 export declare const studentListQuerySchema: z.ZodObject<{
     page: z.ZodDefault<z.ZodNumber>;
@@ -66,9 +69,9 @@ export declare const studentListQuerySchema: z.ZodObject<{
     search?: string | undefined;
     isActive?: boolean | undefined;
 }, {
-    search?: string | undefined;
     page?: number | undefined;
     pageSize?: number | undefined;
+    search?: string | undefined;
     isActive?: "true" | "all" | "false" | undefined;
 }>;
 export type CreateBusOwnerInput = z.infer<typeof createBusOwnerSchema>;

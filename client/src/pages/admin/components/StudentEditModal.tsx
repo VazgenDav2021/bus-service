@@ -4,6 +4,7 @@ interface StudentEditModalProps {
   student: StudentListItem | null;
   loading: boolean;
   form: {
+    studentId: string;
     name: string;
     email: string;
     isActive: boolean;
@@ -11,6 +12,7 @@ interface StudentEditModalProps {
   };
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
+  onStudentIdChange: (value: string) => void;
   onNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onIsActiveChange: (value: boolean) => void;
@@ -23,6 +25,7 @@ export function StudentEditModal({
   form,
   onClose,
   onSubmit,
+  onStudentIdChange,
   onNameChange,
   onEmailChange,
   onIsActiveChange,
@@ -41,6 +44,13 @@ export function StudentEditModal({
           Խմբագրել ուսանողին
         </h3>
         <form onSubmit={onSubmit} className="space-y-3">
+          <input
+            value={form.studentId}
+            onChange={(e) => onStudentIdChange(e.target.value)}
+            required
+            className="w-full px-4 py-2 rounded-lg border border-slate-300"
+            placeholder="Ուսանողի ID (օր.` SU-0001)"
+          />
           <input
             value={form.name}
             onChange={(e) => onNameChange(e.target.value)}
@@ -69,6 +79,12 @@ export function StudentEditModal({
             onChange={(e) => onImageChange(e.target.files?.[0] ?? null)}
             className="w-full px-4 py-2 rounded-lg border border-slate-300"
           />
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 space-y-1">
+            <div>
+              <span className="font-medium">QR կոդ:</span>{" "}
+              {student.qrToken ?? "—"}
+            </div>
+          </div>
           <div className="pt-2 flex justify-end gap-2">
             <button
               type="button"

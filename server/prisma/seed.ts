@@ -32,16 +32,6 @@ async function main() {
     },
   });
 
-  const bus = await prisma.bus.upsert({
-    where: { plateNumber: 'BUS-001' },
-    update: {},
-    create: {
-      plateNumber: 'BUS-001',
-      capacity: 40,
-      ownerId: busOwner.id,
-    },
-  });
-
   const driver = await prisma.driver.upsert({
     where: { email: 'driver@bustransport.com' },
     update: {
@@ -55,26 +45,6 @@ async function main() {
       ownerId: busOwner.id,
     },
   });
-
-  const existingAssignment = await prisma.driverBusAssignment.findFirst({
-    where: {
-      driverId: driver.id,
-      busId: bus.id,
-      startDate: { lte: new Date('2026-01-01T00:00:00.000Z') },
-      endDate: { gte: new Date('2026-01-02T23:59:59.999Z') },
-    },
-    select: { id: true },
-  });
-  if (!existingAssignment) {
-    await prisma.driverBusAssignment.create({
-      data: {
-        driverId: driver.id,
-        busId: bus.id,
-        startDate: new Date('2026-01-01T00:00:00.000Z'),
-        endDate: new Date('2026-01-02T23:59:59.999Z'),
-      },
-    });
-  }
 
   const students = await Promise.all([
     prisma.student.upsert({
@@ -121,7 +91,6 @@ async function main() {
   console.log('- Admin:', admin.email);
   console.log('- Bus Owner:', busOwner.email);
   console.log('- Driver:', driver.email, '(password: Admin123!)');
-  console.log('- Bus:', bus.plateNumber);
   console.log('- Students:', students.length);
 }
 

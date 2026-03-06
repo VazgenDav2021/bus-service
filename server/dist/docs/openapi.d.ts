@@ -133,61 +133,7 @@ export declare function getOpenApiSpec(): {
                 };
             };
         };
-        '/admin/buses': {
-            get: {
-                summary: string;
-                tags: string[];
-                security: {
-                    cookieAuth: never[];
-                }[];
-                responses: {
-                    '200': {
-                        description: string;
-                    };
-                };
-            };
-        };
         '/admin/owners': {
-            get: {
-                summary: string;
-                tags: string[];
-                security: {
-                    cookieAuth: never[];
-                }[];
-                responses: {
-                    '200': {
-                        description: string;
-                    };
-                };
-            };
-            post: {
-                summary: string;
-                tags: string[];
-                security: {
-                    cookieAuth: never[];
-                }[];
-                responses: {
-                    '201': {
-                        description: string;
-                    };
-                };
-            };
-        };
-        '/bus-owner/stats': {
-            get: {
-                summary: string;
-                tags: string[];
-                security: {
-                    cookieAuth: never[];
-                }[];
-                responses: {
-                    '200': {
-                        description: string;
-                    };
-                };
-            };
-        };
-        '/bus-owner/buses': {
             get: {
                 summary: string;
                 tags: string[];
@@ -239,7 +185,7 @@ export declare function getOpenApiSpec(): {
                 };
             };
         };
-        '/bus-owner/assignments': {
+        '/bus-owner/drivers/{driverId}/scans': {
             get: {
                 summary: string;
                 tags: string[];
@@ -248,18 +194,6 @@ export declare function getOpenApiSpec(): {
                 }[];
                 responses: {
                     '200': {
-                        description: string;
-                    };
-                };
-            };
-            post: {
-                summary: string;
-                tags: string[];
-                security: {
-                    cookieAuth: never[];
-                }[];
-                responses: {
-                    '201': {
                         description: string;
                     };
                 };

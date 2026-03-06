@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Bus, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 interface AdminRouteNavProps {
   currentPath: string;
@@ -8,7 +8,6 @@ interface AdminRouteNavProps {
     students: string;
     studentsCreate: string;
     drivers: string;
-    buses: string;
     busOwners: string;
     busOwnersCreate: string;
   };
@@ -24,7 +23,6 @@ export const AdminRouteNav = memo(function AdminRouteNav({
       {[
         { key: "students", path: paths.students, label: "Ուսանողներ", icon: Users },
         { key: "drivers", path: paths.drivers, label: "Վարորդներ", icon: Users },
-        { key: "buses", path: paths.buses, label: "Ավտոբուսներ", icon: Bus },
         {
           key: "busOwners",
           path: paths.busOwners,

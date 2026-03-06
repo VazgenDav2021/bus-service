@@ -1,17 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { api } from '../../lib/api';
+import { QRScanner } from '../../features/scan/QRScanner';
 import type { StudentScanResult } from '../../types/domain';
 import { getErrorMessage } from '../../utils/errors';
 import { APP_ROUTES } from '../../constants/routes';
 
-const TEMP_HARDCODED_QR_TOKEN = 'QR-8b1da795d00af5c2a0d729ff68a66a0f';
-
 export function DriverScanPage() {
   const navigate = useNavigate();
-  const autoScanTriggeredRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [studentInfo, setStudentInfo] = useState<StudentScanResult | null>(null);
@@ -30,12 +28,6 @@ export function DriverScanPage() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    if (autoScanTriggeredRef.current) return;
-    autoScanTriggeredRef.current = true;
-    void handleScan(TEMP_HARDCODED_QR_TOKEN);
-  }, []);
 
   async function handleSubmitEntrance() {
     if (!qrToken) return;
@@ -64,21 +56,20 @@ export function DriverScanPage() {
         </button>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-          <p className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-            Ժամանակավոր թեստային ռեժիմ՝ օգտագործվում է hardcoded QR token{' '}
-            <strong>{TEMP_HARDCODED_QR_TOKEN}</strong>
-          </p>
-          {/* <QRScanner
+          <QRScanner
             onScan={handleScan}
             onError={(message) => toast.error(message)}
-            title="Scan a student QR code"
+            title="Սկանավորեք ուսանողի QR կոդը"
             disabled={loading}
-          /> */}
+          />
         </div>
 
         {studentInfo && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3 flex flex-col items-center">
             <h2 className="text-lg font-semibold text-slate-800">Ուսանողի տվյալներ</h2>
+            {studentInfo.student.imageUrl && (
+              <img src={studentInfo.student.imageUrl} alt={studentInfo.student.name} className="w-24 h-24 rounded-full object-cover" />
+            )}
             <p className="text-slate-700">
               Անուն՝ <strong>{studentInfo.student.name}</strong>
             </p>
