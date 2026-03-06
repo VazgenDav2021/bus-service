@@ -2,6 +2,7 @@ node_modules/
 dist/
 build/
 coverage/
+dist/
 uploads/
 *.log
 .env
